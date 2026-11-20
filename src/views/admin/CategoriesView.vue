@@ -1,0 +1,21 @@
+<script setup lang="ts">
+import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ExportButtons from '@/components/ui/ExportButtons.vue'
+import ModalDialog from '@/components/ui/ModalDialog.vue'
+import { catalogService } from '@/services/catalog.service'
+import { useToastStore } from '@/stores/toast.store'
+import type { Categoria } from '@/types/database.types'
+import { getErrorMessage, slugify } from '@/utils/formatters'
+import { categorySchema } from '@/validations/catalog.schemas'
+const items = ref<Categoria[]>([]); const modal = ref(false); const editing = ref<Categoria | null>(null); const form = reactive({ nombre: '', slug: '' }); const errors = ref<Record<string, string>>({}); const toast = useToastStore(); const loading = ref(true)
+const exportRows = computed(() => items.value.map((item) => [item.id, item.nombre, item.slug]))
+watch(() => form.nombre, (value) => { if (!editing.value) form.slug = slugify(value) })
+async function load() { items.value = await catalogService.listCategories(); loading.value = false }
+function open(item?: Categoria) { editing.value = item ?? null; form.nombre = item?.nombre ?? ''; form.slug = item?.slug ?? ''; errors.value = {}; modal.value = true }
+async function save() { const result = categorySchema.safeParse(form); if (!result.success) { errors.value = Object.fromEntries(result.error.issues.map((issue) => [String(issue.path[0]), issue.message])); return } try { await catalogService.saveCategory(result.data, editing.value?.id); toast.show('Categoría guardada', '', 'success'); modal.value = false; await load() } catch (error) { toast.show('No se pudo guardar', getErrorMessage(error), 'error') } }
+async function remove(item: Categoria) { if (!window.confirm(`¿Eliminar la categoría “${item.nombre}”?`)) return; try { await catalogService.deleteCategory(item.id); await load() } catch (error) { toast.show('No se pudo eliminar', `Comprueba que no tenga productos asociados. ${getErrorMessage(error)}`, 'error') } }
+onMounted(() => load().catch((error) => toast.show('Error', getErrorMessage(error), 'error')))
+</script>
+<template><div><div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end"><div><h2 class="page-title">Categorías</h2><p class="page-copy">Organiza el catálogo para facilitar la búsqueda.</p></div><div class="flex flex-wrap gap-2"><ExportButtons title="Categorías" file-name="categorias" :headers="['ID', 'Nombre', 'Slug']" :rows="exportRows" /><button class="btn-primary" @click="open()"><Plus class="size-4" />Nueva categoría</button></div></div><p v-if="loading" class="mt-8 text-slate-500">Cargando...</p><EmptyState v-else-if="!items.length" class="mt-8" title="No hay categorías" message="Crea la primera categoría para comenzar a cargar productos." /><div v-else class="table-wrap mt-8"><table class="data-table"><thead><tr><th>Nombre</th><th>Slug</th><th class="w-32">Acciones</th></tr></thead><tbody><tr v-for="item in items" :key="item.id"><td class="font-semibold text-ink">{{ item.nombre }}</td><td><code class="rounded bg-slate-100 px-2 py-1 text-sm">{{ item.slug }}</code></td><td><div class="flex gap-1"><button class="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Editar" @click="open(item)"><Pencil class="size-4" /></button><button class="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600" aria-label="Eliminar" @click="remove(item)"><Trash2 class="size-4" /></button></div></td></tr></tbody></table></div><ModalDialog :open="modal" :title="editing ? 'Editar categoría' : 'Nueva categoría'" @close="modal = false"><form class="space-y-4" @submit.prevent="save"><div><label class="label">Nombre</label><input v-model="form.nombre" class="field" /><p v-if="errors.nombre" class="mt-1 text-sm text-red-600">{{ errors.nombre }}</p></div><div><label class="label">Slug</label><input v-model="form.slug" class="field" /><p v-if="errors.slug" class="mt-1 text-sm text-red-600">{{ errors.slug }}</p></div><div class="flex justify-end gap-3 pt-2"><button type="button" class="btn-secondary" @click="modal = false">Cancelar</button><button class="btn-primary">Guardar</button></div></form></ModalDialog></div></template>
