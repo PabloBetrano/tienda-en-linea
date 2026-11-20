@@ -2,6 +2,11 @@
 
 Aplicación Vue 3 + TypeScript para administrar catálogo, inventario, clientes y pedidos, conectada a Supabase.
 
+## Aplicación publicada
+
+- Cloudflare Workers: https://tienda-en-linea-pablobetrano.control-odc-facturas.workers.dev
+- Despliegue estático con fallback SPA para Vue Router.
+
 ## Funcionalidades
 
 - Alta segura de clientes desde el panel administrativo mediante Edge Function.
@@ -30,5 +35,6 @@ update public.perfiles set rol = 'administrador' where id = '<UUID_DEL_USUARIO>'
 - `npm run lint`: análisis estático.
 - `npm run build`: compilación de producción.
 - `npm run preview`: vista previa de `dist`.
+- `npm run deploy:cloudflare`: compila y publica en Cloudflare Workers.
 
 Consulta [AGENTS.md](./AGENTS.md) antes de modificar el proyecto.
