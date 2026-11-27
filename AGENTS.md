@@ -56,6 +56,14 @@ Vue 3 (Composition API y `<script setup>`), TypeScript estricto, Vite, Tailwind 
 - No muestre secretos, tokens ni trazas internas. Mantenga mensajes comprensibles y preserve el error técnico en logs de desarrollo cuando sea necesario.
 - Estados de carga, vacío, error y éxito son obligatorios en vistas con datos remotos.
 
+## Ramas y commits
+
+- `main` es la rama estable. Integre los cambios listos mediante un pull request desde `develop`.
+- `develop` es la rama de integración. Cree las ramas de trabajo desde `develop` y devuelva allí los cambios mediante un pull request.
+- Cada commit debe tener un título breve y un cuerpo detallado, ambos en español. Use el formato `<tipo>(<alcance>): <título>`.
+- En el cuerpo explique qué cambió, por qué y cómo se verificó. Indique el impacto, las limitaciones o las pruebas pendientes cuando corresponda.
+- No incluya secretos, datos personales ni detalles privados de auditoría en los commits.
+
 ## Calidad
 
 Antes de entregar cambios ejecute:
