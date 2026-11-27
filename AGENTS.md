@@ -45,9 +45,10 @@ Vue 3 (Composition API y `<script setup>`), TypeScript estricto, Vite, Tailwind 
 
 ## Importación de productos
 
-- Mantenga alineados `public/plantillas/importar-productos.csv`, la validación de importación y la RPC `importar_productos`.
-- Use CSV UTF-8 de hasta 500 filas y 512 KiB. La categoría se identifica por un slug existente. El stock vacío usa 0 y el estado vacío crea un producto inactivo.
-- El administrador revisa las filas y sus errores antes de confirmar. La RPC vuelve a validar permisos, columnas, tipos, límites, categorías y URLs HTTPS.
+- Mantenga alineados el Excel y las instrucciones de `public/plantillas`, la validación de importación y la RPC `importar_productos`.
+- Cargue solo archivos `.xlsx` con la hoja `Productos`, hasta 500 filas y 512 KiB. Limite la descompresión y rechace fórmulas, macros, adjuntos y vínculos a otros libros.
+- Consulte las categorías vigentes por slug. El stock vacío usa 0 y el estado vacío crea un producto inactivo.
+- Muestre el detalle descargable por fila y bloquee la confirmación si hay errores. La RPC vuelve a validar permisos, campos, límites, categorías y URLs HTTPS.
 - Guarde o revierta todo el lote. Reuse el identificador de solicitud al reintentar el mismo lote y no actualice productos existentes desde la importación.
 
 ## Autenticación y autorización

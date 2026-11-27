@@ -36,6 +36,15 @@ async function load() {
   [products.value, categories.value] = await Promise.all([catalogService.listProducts(), catalogService.listCategories()])
 }
 
+async function loadImportCategories() {
+  try {
+    categories.value = await catalogService.listCategories()
+    return categories.value
+  } catch (error) {
+    throw new Error('No se pudieron consultar las categorías vigentes. Intenta de nuevo.', { cause: error })
+  }
+}
+
 async function importProducts(request: ProductImportRequest) {
   const total = await catalogService.importProducts(request)
   toast.show('Importación completada', `Productos creados: ${total}.`, 'success')
@@ -202,6 +211,7 @@ onBeforeUnmount(releasePreview)
     <ProductImportDialog
       :open="importModal"
       :categories="categories"
+      :load-categories="loadImportCategories"
       :confirm-import="importProducts"
       @close="importModal = false"
     />

@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 const pricePattern = /^[0-9]{1,10}(?:[.,][0-9]{1,2})?$/
 const stockPattern = /^[0-9]{1,10}$/
+export const productImportCategorySlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const secureImagePattern = /^https:\/\/[a-zA-Z0-9][a-zA-Z0-9.-]*(?::[0-9]{1,5})?(?:[/?#][^\s\\]*)?$/
 
 function isSecureImageUrl(value: string) {
@@ -12,7 +13,7 @@ export const productImportRowSchema = z.object({
   nombre: z.string().refine((value) => [...value].length >= 2 && [...value].length <= 150, {
     message: 'El nombre debe tener entre 2 y 150 caracteres.',
   }),
-  categoria_slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Usa el identificador de una categoría existente.'),
+  categoria_slug: z.string().regex(productImportCategorySlugPattern, 'Usa el identificador de una categoría existente.'),
   precio: z.string().regex(pricePattern, 'Usa un precio de 0 a 9999999999,99 con hasta dos decimales.').transform((value) => value.replace(',', '.')),
   stock: z.string().transform((value) => value || '0')
     .pipe(z.string().regex(stockPattern, 'El inventario debe ser un número entero de 0 a 2147483647.'))
