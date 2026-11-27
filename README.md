@@ -37,4 +37,12 @@ update public.perfiles set rol = 'administrador' where id = '<UUID_DEL_USUARIO>'
 - `npm run preview`: vista previa de `dist`.
 - `npm run deploy:cloudflare`: compila y publica en Cloudflare Workers.
 
+## Tipo de cambio USD/CRC
+
+Después de iniciar sesión, la administración y la tienda muestran la compra y la venta por dólar, con la fecha de referencia en Costa Rica. Si la cotización del día todavía no está disponible, se identifica la última cotización recibida de los siete días anteriores.
+
+- Para consultar directamente al Banco Central, configura `BCCR_API_TOKEN` en `.env.local` para desarrollo o entre las variables de entorno de Netlify para **Functions**. La función consulta los indicadores 317 (compra) y 318 (venta) del [SDDE del BCCR](https://gee.bccr.fi.cr/indicadoreseconomicos/Documentos/DocumentosMetodologiasNotasTecnicas/Estandar_API_SDDE.pdf). El token se usa en el servidor y se guarda sin el prefijo `VITE_`.
+- Cuando falta el token o el BCCR no tiene datos del día, la función intenta consultar la [API pública de Hacienda](https://api.hacienda.go.cr/docs/). La interfaz indica qué servicio respondió.
+- La ruta `/api/tipo-cambio` está disponible en los servidores locales de Vite y en Netlify Functions. En Cloudflare Workers estático se muestra el estado de cotización no disponible.
+
 Consulta [AGENTS.md](./AGENTS.md) antes de modificar el proyecto.

@@ -2,6 +2,7 @@
 import { LogIn, LogOut, Menu, Package, ShieldCheck, ShoppingBag, ShoppingCart, X } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import ExchangeRateBanner from '@/components/ui/ExchangeRateBanner.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useCartStore } from '@/stores/cart.store'
 
@@ -36,6 +37,9 @@ async function logout() {
         <RouterLink to="/" class="block py-2">Inicio</RouterLink><RouterLink to="/tienda" class="block py-2">Productos</RouterLink><RouterLink to="/tienda/carrito" class="block py-2">Carrito ({{ cart.count }})</RouterLink><RouterLink v-if="auth.isAuthenticated" to="/tienda/mis-pedidos" class="block py-2">Mis pedidos</RouterLink><RouterLink v-if="auth.isAdmin" to="/admin" class="block py-2">Administración</RouterLink><RouterLink v-if="!auth.isAuthenticated" to="/ingresar" class="block py-2">Ingresar</RouterLink><button v-else class="py-2" @click="logout">Cerrar sesión</button>
       </nav>
     </header>
+    <div v-if="auth.isAuthenticated" class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-12">
+      <ExchangeRateBanner />
+    </div>
     <RouterView />
     <footer class="mt-16 border-t border-brand-700/8 bg-[#f3f3f5]"><div class="mx-auto flex max-w-7xl flex-col justify-between gap-3 px-4 py-10 text-sm text-slate-500 sm:flex-row sm:px-6 lg:px-12"><p>© 2026 ATELIER Maison de Mode. Todos los derechos reservados.</p><p class="font-medium tracking-wide text-brand-700">Compra segura · Diseño consciente</p></div></footer>
   </div>
