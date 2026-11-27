@@ -43,6 +43,13 @@ Vue 3 (Composition API y `<script setup>`), TypeScript estricto, Vite, Tailwind 
 - La creación administrativa de usuarios debe pasar por `admin-create-client`; nunca importe una clave de servicio en Vue.
 - Las tablas de gestión nuevas deben integrar `ExportButtons` con columnas explícitas y datos filtrados de la vista.
 
+## Importación de productos
+
+- Mantenga alineados `public/plantillas/importar-productos.csv`, la validación de importación y la RPC `importar_productos`.
+- Use CSV UTF-8 de hasta 500 filas y 512 KiB. La categoría se identifica por un slug existente. El stock vacío usa 0 y el estado vacío crea un producto inactivo.
+- El administrador revisa las filas y sus errores antes de confirmar. La RPC vuelve a validar permisos, columnas, tipos, límites, categorías y URLs HTTPS.
+- Guarde o revierta todo el lote. Reuse el identificador de solicitud al reintentar el mismo lote y no actualice productos existentes desde la importación.
+
 ## Autenticación y autorización
 
 - Inicialice la sesión una vez desde `auth.store.ts` y conserve el listener `onAuthStateChange` sin consultas asíncronas dentro del callback.

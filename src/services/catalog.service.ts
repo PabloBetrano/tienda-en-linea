@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Categoria, Producto } from '@/types/database.types'
+import type { ProductImportRequest } from '@/types/productImport.types'
 
 export const catalogService = {
   async listCategories() {
@@ -35,5 +36,18 @@ export const catalogService = {
   async deleteProduct(id: number) {
     const { error } = await supabase.from('productos').delete().eq('id', id)
     if (error) throw error
+  },
+  async importProducts({ requestId, items }: ProductImportRequest): Promise<number> {
+    const { data, error } = await supabase.rpc('importar_productos', {
+      solicitud_id: requestId,
+      productos: items,
+    })
+    if (error?.code === '42501') throw new Error('Solo una cuenta administradora puede importar productos.')
+    if (error?.code === '22023') throw new Error(error.message)
+    if (error?.code === '23503') throw new Error('Una categoría ya no está disponible. Revisa el archivo antes de importar.')
+    if (error || data !== items.length) {
+      throw new Error('No se pudo confirmar la importación. Reintenta este mismo lote.')
+    }
+    return data
   },
 }
