@@ -1,3 +1,5 @@
+import type { ProductImportItem } from '@/types/productImport.types'
+
 export type RolUsuario = 'cliente' | 'administrador'
 export type EstadoPedido = 'pendiente' | 'pagado' | 'enviado' | 'entregado' | 'cancelado'
 
@@ -67,6 +69,10 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      importar_productos: {
+        Args: { solicitud_id: string; productos: ProductImportItem[] }
+        Returns: number
+      }
       crear_pedido: {
         Args: { items: { producto_id: number; cantidad: number }[] }
         Returns: number

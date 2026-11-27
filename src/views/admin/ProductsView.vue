@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Image, Pencil, Plus, Search, Trash2, Upload, X } from 'lucide-vue-next'
+import { FileUp, Image, Pencil, Plus, Search, Trash2, Upload, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import ProductImportDialog from '@/components/admin/ProductImportDialog.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ExportButtons from '@/components/ui/ExportButtons.vue'
 import ModalDialog from '@/components/ui/ModalDialog.vue'
@@ -8,6 +9,7 @@ import { catalogService } from '@/services/catalog.service'
 import { productImagesService } from '@/services/productImages.service'
 import { useToastStore } from '@/stores/toast.store'
 import type { Categoria, Producto } from '@/types/database.types'
+import type { ProductImportRequest } from '@/types/productImport.types'
 import { formatCurrency, formatDate, getErrorMessage } from '@/utils/formatters'
 import { productImageSchema, productSchema } from '@/validations/catalog.schemas'
 
@@ -15,6 +17,7 @@ const products = ref<Producto[]>([])
 const categories = ref<Categoria[]>([])
 const search = ref('')
 const modal = ref(false)
+const importModal = ref(false)
 const editing = ref<Producto | null>(null)
 const busy = ref(false)
 const selectedImage = ref<globalThis.File | null>(null)
@@ -31,6 +34,16 @@ const imagePreview = computed(() => localPreviewUrl.value || (!removeCurrentImag
 
 async function load() {
   [products.value, categories.value] = await Promise.all([catalogService.listProducts(), catalogService.listCategories()])
+}
+
+async function importProducts(request: ProductImportRequest) {
+  const total = await catalogService.importProducts(request)
+  toast.show('Importación completada', `Productos creados: ${total}.`, 'success')
+  try {
+    products.value = await catalogService.listProducts()
+  } catch {
+    toast.show('Los productos se guardaron', 'Recarga la página para actualizar la lista.', 'info')
+  }
 }
 
 function releasePreview() {
@@ -167,7 +180,11 @@ onBeforeUnmount(releasePreview)
   <div>
     <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
       <div><h2 class="page-title">Productos</h2><p class="page-copy">Controla catálogo, imágenes, precios e inventario.</p></div>
-      <div class="flex flex-wrap gap-2"><ExportButtons title="Productos" file-name="productos" :headers="['ID', 'Producto', 'Categoría', 'Precio (CRC)', 'Stock', 'Estado', 'Creado']" :rows="exportRows" /><button class="btn-primary" @click="open()"><Plus class="size-4" />Nuevo producto</button></div>
+      <div class="flex flex-wrap gap-2">
+        <ExportButtons title="Productos" file-name="productos" :headers="['ID', 'Producto', 'Categoría', 'Precio (CRC)', 'Stock', 'Estado', 'Creado']" :rows="exportRows" />
+        <button type="button" class="btn-secondary" @click="importModal = true"><FileUp class="size-4" />Importar productos</button>
+        <button type="button" class="btn-primary" @click="open()"><Plus class="size-4" />Nuevo producto</button>
+      </div>
     </div>
 
     <label class="relative mt-7 block max-w-md"><Search class="absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-slate-400" /><input v-model="search" class="field pl-11" placeholder="Buscar producto..." /></label>
@@ -181,6 +198,13 @@ onBeforeUnmount(releasePreview)
         </tr>
       </tbody></table>
     </div>
+
+    <ProductImportDialog
+      :open="importModal"
+      :categories="categories"
+      :confirm-import="importProducts"
+      @close="importModal = false"
+    />
 
     <ModalDialog :open="modal" :title="editing ? 'Editar producto' : 'Nuevo producto'" wide @close="close">
       <form class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
