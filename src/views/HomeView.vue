@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Check, Gem, Heart, LogIn, Menu, ShieldCheck, Shirt, ShoppingBag, ShoppingCart, Sparkles, Truck, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
+import ProductGallery from '@/components/store/ProductGallery.vue'
 import { catalogService } from '@/services/catalog.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useCartStore } from '@/stores/cart.store'
@@ -79,12 +80,14 @@ onMounted(async () => {
             <p class="mt-5 max-w-2xl text-lg leading-8 text-brand-100 sm:text-2xl">La elegancia en su estado más puro. Una colección contemporánea inspirada en la serenidad del bosque.</p>
             <div class="mt-9 flex flex-col gap-3 sm:flex-row">
               <RouterLink to="/tienda" class="inline-flex min-h-13 items-center justify-center rounded-full bg-brand-100 px-7 py-3 font-semibold text-ink transition hover:bg-white">Descubrir colección</RouterLink>
-              <a href="#destacados" class="inline-flex min-h-13 items-center justify-center rounded-full bg-white/12 px-7 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20">Ver piezas clave</a>
+              <a href="#galeria" class="inline-flex min-h-13 items-center justify-center rounded-full bg-white/12 px-7 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20">Ver galería</a>
             </div>
             <div class="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold text-brand-100"><span class="flex items-center gap-2"><Check class="size-4" /> Compra segura</span><span class="flex items-center gap-2"><Check class="size-4" /> Atención personalizada</span></div>
           </div>
         </div>
       </section>
+
+      <ProductGallery />
 
       <section id="beneficios" class="scroll-mt-20 border-y border-slate-200 bg-white">
         <div class="mx-auto grid max-w-7xl divide-y divide-slate-200 px-4 sm:px-6 md:grid-cols-3 md:divide-x md:divide-y-0 lg:px-8">
