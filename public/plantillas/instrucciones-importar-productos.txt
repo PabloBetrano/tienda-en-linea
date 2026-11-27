@@ -1,0 +1,31 @@
+INSTRUCCIONES PARA IMPORTAR PRODUCTOS
+Tienda en Línea
+
+1. En Administración → Productos, abre Importar productos.
+2. Descarga la plantilla Excel y el archivo Catálogos de carga.
+3. Abre la plantilla. Conserva la hoja Productos, la fila de encabezados y el
+   orden de las columnas. Completa una fila por producto desde la fila 2.
+4. Guarda el archivo como .xlsx. Admite hasta 500 filas y 512 KiB.
+   Usa valores directos. Evita fórmulas, macros, hojas adicionales, imágenes
+   incrustadas y vínculos a otros libros.
+5. Selecciona el libro en el panel. Revisa el detalle de prevalidación:
+   identifica por fila qué se creará y qué debe corregirse. Puedes descargar
+   ese detalle en Excel. En esta etapa no se guardan productos.
+6. Si hay errores, corrige el libro y vuelve a seleccionarlo. Confirma cuando
+   todas las filas estén listas. Si se interrumpe la respuesta, reintenta el
+   mismo lote desde el cuadro abierto.
+
+COLUMNAS
+nombre           Obligatoria. Entre 2 y 150 caracteres.
+categoria_slug   Obligatoria. Copia el identificador de la hoja Categorías.
+precio           Obligatoria. Colones, sin separadores de miles. De 0 a
+                 9999999999,99, con hasta dos decimales.
+stock            Opcional. Entero de 0 a 2147483647. En blanco se guarda 0.
+activo           Opcional. true publica el producto y false lo deja inactivo.
+                 En blanco se crea inactivo.
+descripcion      Opcional. Hasta 2000 caracteres.
+imagen_url       Opcional. URL HTTPS, hasta 2048 caracteres. No adjuntes fotos.
+
+Cada fila crea un producto nuevo. La importación no modifica productos que
+ya existen. Supabase vuelve a validar el lote al confirmar. Si una fila
+falla, no se guarda ninguna.

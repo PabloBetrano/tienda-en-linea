@@ -4,22 +4,25 @@ import { ref } from 'vue'
 import ModalDialog from '@/components/ui/ModalDialog.vue'
 import type { Categoria } from '@/types/database.types'
 import type { ProductImportRequest } from '@/types/productImport.types'
-import { parseProductCsv, PRODUCT_IMPORT_MAX_BYTES, PRODUCT_IMPORT_MAX_ROWS } from '@/utils/productImport'
+import { parseProductWorkbook, PRODUCT_IMPORT_MAX_BYTES, PRODUCT_IMPORT_MAX_ROWS, type ProductImportReview } from '@/utils/productImport'
+import { downloadProductCatalogs, downloadProductImportReview } from '@/utils/productImportDownloads'
 import { getErrorMessage } from '@/utils/formatters'
 
 const props = defineProps<{
   open: boolean
   categories: Categoria[]
+  loadCategories: () => Promise<Categoria[]>
   confirmImport: (request: ProductImportRequest) => Promise<void>
 }>()
 const emit = defineEmits<{ close: [] }>()
 
-const review = ref<ReturnType<typeof parseProductCsv> | null>(null)
+const review = ref<ProductImportReview | null>(null)
 const request = ref<ProductImportRequest | null>(null)
 const fileName = ref('')
 const message = ref('')
 const reading = ref(false)
 const importing = ref(false)
+const downloading = ref(false)
 
 function clearReview() {
   review.value = null
@@ -41,23 +44,15 @@ async function selectFile(event: Event) {
   const previousRequest = request.value
   clearReview()
   fileName.value = file.name
-  if (!file.name.toLowerCase().endsWith('.csv') || file.size > PRODUCT_IMPORT_MAX_BYTES) {
-    message.value = 'Selecciona un CSV de hasta 512 KiB.'
+  if (!file.name.toLowerCase().endsWith('.xlsx') || file.size > PRODUCT_IMPORT_MAX_BYTES) {
+    message.value = 'Selecciona un archivo .xlsx de hasta 512 KiB.'
     return
   }
 
   reading.value = true
   try {
-    const bytes = await file.arrayBuffer()
-    let csv: string
-    try {
-      csv = new globalThis.TextDecoder('utf-8', { fatal: true }).decode(bytes)
-    } catch (error) {
-      throw new Error('Guarda el archivo como CSV UTF-8 y vuelve a seleccionarlo.', { cause: error })
-    }
-    if (csv.includes('\0')) throw new Error('El archivo contiene caracteres no permitidos.')
-    const categories = new Set(props.categories.map(({ slug }) => slug))
-    const result = parseProductCsv(csv, categories)
+    const [bytes, categories] = await Promise.all([file.arrayBuffer(), props.loadCategories()])
+    const result = await parseProductWorkbook(bytes, new Set(categories.map(({ slug }) => slug)))
     review.value = result
     if (!result.issues.length) {
       const items = result.rows.map(({ item }) => item)
@@ -69,6 +64,20 @@ async function selectFile(event: Event) {
     message.value = getErrorMessage(error)
   } finally {
     reading.value = false
+  }
+}
+
+async function exportWorkbook(kind: 'catalogs' | 'review') {
+  if (downloading.value) return
+  downloading.value = true
+  message.value = ''
+  try {
+    if (kind === 'catalogs') await downloadProductCatalogs(await props.loadCategories())
+    else if (review.value) await downloadProductImportReview(review.value)
+  } catch {
+    message.value = 'No se pudo descargar el archivo Excel. Intenta de nuevo.'
+  } finally {
+    downloading.value = false
   }
 }
 
@@ -91,18 +100,24 @@ async function confirm() {
 <template>
   <ModalDialog :open="open" title="Importar productos" wide @close="close">
     <p class="text-sm text-slate-600">
-      Descarga la plantilla, completa los productos y sube el CSV UTF-8 para revisarlos.
+      Descarga la plantilla, completa los productos y sube el archivo Excel para revisarlos.
       Puedes importar hasta {{ PRODUCT_IMPORT_MAX_ROWS }} productos. Cada fila crea un producto nuevo.
     </p>
     <div class="mt-4 flex flex-wrap items-center gap-3">
-      <a href="/plantillas/importar-productos.csv" download class="btn-secondary">
-        <Download class="size-4" />Descargar plantilla CSV
+      <a href="/plantillas/importar-productos.xlsx" download class="btn-secondary">
+        <Download class="size-4" />Plantilla Excel
       </a>
+      <a href="/plantillas/instrucciones-importar-productos.txt" download class="btn-secondary">
+        <Download class="size-4" />Instrucciones
+      </a>
+      <button type="button" class="btn-secondary" :disabled="downloading || reading || importing" @click="exportWorkbook('catalogs')">
+        <Download class="size-4" />Catálogos de carga
+      </button>
       <label class="btn-secondary cursor-pointer">
-        Elegir archivo CSV
+        Elegir archivo Excel
         <input
           type="file"
-          accept=".csv,text/csv"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           class="sr-only"
           :disabled="reading || importing"
           @change="selectFile"
@@ -128,18 +143,26 @@ async function confirm() {
       <p v-if="reading" role="status" class="text-sm text-slate-600">Revisando el archivo…</p>
       <p v-if="message" role="alert" class="text-sm text-red-700">{{ message }}</p>
       <template v-if="review">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h3 class="font-semibold text-ink">Detalle de prevalidación</h3>
+          <button type="button" class="btn-secondary" :disabled="downloading || importing || reading" @click="exportWorkbook('review')">
+            <Download class="size-4" />Descargar detalle Excel
+          </button>
+        </div>
+        <p class="text-sm text-slate-600">La revisión no guarda productos. Corrige las filas marcadas antes de confirmar.</p>
         <p role="status" class="text-sm font-medium">
           {{ review.rows.length }} filas listas · {{ review.issues.length }} filas con errores
         </p>
         <ul v-if="review.issues.length" class="max-h-40 space-y-2 overflow-auto rounded-xl bg-red-50 p-3 text-sm text-red-800">
           <li v-for="issue in review.issues" :key="issue.line">
-            <strong>Línea {{ issue.line }}</strong> {{ issue.messages.join(' ') }}
+            <strong>Fila {{ issue.line }}<template v-if="issue.name"> · {{ issue.name }}</template></strong>
+            {{ issue.messages.join(' ') }}
           </li>
         </ul>
         <div v-if="review.rows.length" class="table-wrap max-h-56 overflow-auto">
           <table class="data-table">
             <caption class="sr-only">Vista previa del lote</caption>
-            <thead><tr><th>Línea</th><th>Producto</th><th>Categoría</th><th>Precio (CRC)</th><th>Stock</th><th>Estado</th><th>Descripción</th><th>Imagen</th></tr></thead>
+            <thead><tr><th>Fila de Excel</th><th>Producto</th><th>Categoría</th><th>Precio (CRC)</th><th>Stock</th><th>Estado</th><th>Descripción</th><th>Imagen</th></tr></thead>
             <tbody>
               <tr v-for="{ line, item } in review.rows" :key="line">
                 <td>{{ line }}</td>
