@@ -1,6 +1,14 @@
 import { supabase } from './supabase'
 
 export const authService = {
+  async countRegisteredUsers(): Promise<number> {
+    const { data, error } = await supabase.rpc('contar_usuarios_registrados')
+    if (error) throw error
+    if (typeof data !== 'number' || !Number.isSafeInteger(data) || data < 0) {
+      throw new Error('El total de usuarios no es válido.')
+    }
+    return data
+  },
   async signIn(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
